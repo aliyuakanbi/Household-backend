@@ -150,3 +150,24 @@ app.get("/api/activity/delete-broken", async (req, res) => {
   }
 });
 app.use("/api", require("./routes/auth"));
+// ✅ DELETE an item by ID
+app.delete("/api/items/:id", async (req, res) => {
+  try {
+    const deletedItem = await Item.findByIdAndDelete(req.params.id);
+    if (!deletedItem) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+
+    // Optionally: log a delete activity
+    await Activity.create({
+      takenBy: deletedItem.takenBy,
+      itemName: deletedItem.name,
+      date: new Date(),
+      message: `🗑️ ${deletedItem.takenBy} deleted "${deletedItem.name}"`,
+    });
+
+    res.json({ message: "🗑️ Item deleted", item: deletedItem });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete item" });
+  }
+});
